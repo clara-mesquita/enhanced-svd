@@ -39,4 +39,4 @@ if __name__ == "__main__":
     main(args.input_dir, args.output_dir)
     print("Missing data introduction completed.")
     # Usage example:
-    # python nca/create_missing_data_rnp.py --input_dir ./vazao-intervalos-longos --output ./vazao-intervalos-longos-missing
+    # python nca/create_missing_data_rnp.py --input_dir ./data/vazao-escolhidos-intervalos --output ./data/vazao-escolhidos-intervalos-missing

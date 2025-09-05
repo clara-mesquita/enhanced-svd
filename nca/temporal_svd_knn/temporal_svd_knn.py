@@ -5,15 +5,99 @@ import numpy as np
 # 1) PERIOD (n_lines) ESTIMATION
 # ----------------------------
 
-def _acf(y, max_lag): # ->basicamente isso aqui calcula a galera com maior correlação e deixa em uma só coluna -> uantas vezes esse é o utilizado??
-    """Biased ACF up to max_lag (lag 0..max_lag). NaNs are linearly interpolated first."""
-    y = pd.Series(y).interpolate(limit_direction="both").to_numpy()
-    y = y - np.nanmean(y)
-    n = len(y)  
+def estimate_period(y, min_period=4, max_period=None):
+    """
+    Pick period (n_lines) automatically using ACF peak with robust error handling
+    """
+    y = np.asarray(y, dtype=float)
+    n = len(y)
+    
+    # Handle edge cases
+    if n == 0:
+        return min_period
+    
+    # Set reasonable max_period if not provided
+    if max_period is None:
+        max_period = max(7, min(n // 4, 1000))
+    
+    # Ensure min_period and max_period are valid
+    min_period = max(1, min_period)
+    max_period = max(min_period, max_period)
+    
+    # For very short series, return a safe value
+    if n < min_period * 2:
+        return max(min_period, min(n, 8))
+    
+    try:
+        # Calculate ACF with robust error handling
+        acf_vals = _acf(y, max_period)
+        
+        # Ensure we have valid ACF values
+        if np.all(np.isnan(acf_vals)):
+            return min_period
+        
+        # Find the best lag in the valid range
+        valid_range = slice(min_period, min(max_period + 1, len(acf_vals)))
+        if valid_range.stop <= valid_range.start:
+            return min_period
+            
+        acf_subset = acf_vals[valid_range]
+        
+        # If all values are NaN, return default
+        if np.all(np.isnan(acf_subset)):
+            return min_period
+            
+        # Replace any remaining NaNs with -inf to ignore them
+        acf_subset = np.nan_to_num(acf_subset, nan=-np.inf)
+        
+        # Find the best lag
+        best_idx = np.argmax(acf_subset)
+        best_lag = min_period + best_idx
+        
+        return int(best_lag)
+        
+    except Exception as e:
+        # Fallback to default if any error occurs
+        return min_period
+
+def _acf(y, max_lag):
+    """Biased ACF up to max_lag with robust error handling"""
+
+    # Handle empty array
+    if len(y) == 0:
+        return np.zeros(max_lag + 1)
+    
+    # Interpolate missing values
+    y_series = pd.Series(y)
+    y_filled = y_series.interpolate(limit_direction="both").to_numpy()
+    
+    # Handle constant series
+    if np.all(y_filled == y_filled[0]):
+        acf_vals = np.zeros(max_lag + 1)
+        acf_vals[0] = 1.0  # Perfect correlation at lag 0
+        return acf_vals
+    
+    # Normalize
+    y_normalized = y_filled - np.nanmean(y_filled)
+    
+    # Calculate denominator safely
+    denom = np.dot(y_normalized, y_normalized)
+    if denom == 0:
+        return np.zeros(max_lag + 1)
+    
+    # Calculate ACF
+    n = len(y_normalized)
     acf_vals = np.empty(max_lag + 1)
-    denom = np.dot(y, y) + 1e-12
+    
     for lag in range(max_lag + 1):
-        acf_vals[lag] = np.dot(y[: n - lag], y[lag:]) / denom
+        if lag >= n:
+            acf_vals[lag] = 0
+        else:
+            acf_vals[lag] = np.dot(
+                y_normalized[:n - lag], 
+                y_normalized[lag:]
+            ) / denom
+            
     return acf_vals
 
 def estimate_period(y,min_period,max_period):  
@@ -179,17 +263,29 @@ def impute_throughput_svd_knn(df, col="throughput_bps", min_period=4, max_period
     y = df[col].to_numpy(dtype=float)
     original_index = df.index
 
-    # Detect period (n_lines)
-    period = estimate_period(y, min_period=min_period, max_period=max_period)
+    try:
+        # Detect period (n_lines)
+        period = estimate_period(y, min_period=min_period, max_period=max_period)
+    except Exception as e:
+        raise RuntimeError(f"Erro na fase de detecção de período: {str(e)}")
 
-    # Fold
-    M, orig_len = fold_series_to_matrix(y, period=period)
+    try:
+        # Fold
+        M, orig_len = fold_series_to_matrix(y, period=period)
+    except Exception as e:
+        raise RuntimeError(f"Erro na fase de folding: {str(e)}")
 
-    # Impute in latent KNN space
-    M_imp = knn_in_latent(M, k=k, energy=energy, allow_future=allow_future)
+    try:
+        # Impute in latent KNN space
+        M_imp = knn_in_latent(M, k=k, energy=energy, allow_future=allow_future)
+    except Exception as e:
+        raise RuntimeError(f"Erro na fase de imputação KNN: {str(e)}")
 
-    # Unfold
-    y_imp = unfold_matrix_to_series(M_imp, original_len=orig_len)
+    try:
+        # Unfold
+        y_imp = unfold_matrix_to_series(M_imp, original_len=orig_len)
+    except Exception as e:
+        raise RuntimeError(f"Erro na fase de unfolding: {str(e)}")
 
     # print(y_imp)
 
