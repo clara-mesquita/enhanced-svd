@@ -1,2 +1,6 @@
 /.venv
 /cesnet-institutions-throughput
+/data
+*/results/*
+**/__pycache__/
+**/*.pyc
