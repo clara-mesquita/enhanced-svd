@@ -10,7 +10,7 @@ from urllib3.exceptions import InsecureRequestWarning
 today = date.today()
 
 #base = "http://monipe-central.rnp.br"
-base = "https://pmp-central.geant.org"
+base = "https://pmp-archive.geant.org"
 
 def get_response(url, time_range):
     cont = 0
@@ -56,7 +56,7 @@ def calc_mean(val):
 def request(folder, name, source, destination, type, time_range, target_bandwidth="9999999999"):
     disable_warnings(InsecureRequestWarning)
     #url = "http://monipe-central.rnp.br/esmond/perfsonar/archive/?"
-    url = "https://pmp-central.geant.org/esmond/perfsonar/archive/?"
+    url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
     hearder = {"pscheduler-test-type": type, "source": source, "destination": destination}#, "bw-target-bandwidth": target_bandwidth, "time-range": time_range}
     response = requests.get(url, params=hearder, verify=False)
     
@@ -85,7 +85,7 @@ def request(folder, name, source, destination, type, time_range, target_bandwidt
 def request_traceroute(folder, name, source, destination, type, time_range):
     disable_warnings(InsecureRequestWarning)
     limite = "?limit=26400"
-    url = "https://pmp-central.geant.org/esmond/perfsonar/archive/?"
+    url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
     header = {"pscheduler-test-type": type, "source": source,
               "destination": destination, "time-range": time_range}
     response = requests.get(url, params=header, verify=False)
@@ -141,7 +141,7 @@ def request_traceroute(folder, name, source, destination, type, time_range):
 def request_atraso(folder, name, source, destination, type, time_range, label):
     disable_warnings(InsecureRequestWarning)
     limite1 = "?limit=285000"
-    url = "https://pmp-central.geant.org/esmond/perfsonar/archive/?"
+    url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
     header = {"pscheduler-test-type": type, "source": source,
               "destination": destination, "time-range": time_range}
     
@@ -172,8 +172,7 @@ def request_atraso(folder, name, source, destination, type, time_range, label):
 
 
 
-
-'''request("./pmp2/bbr/","bbr", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu", 
+request("./pmp2/bbr/","bbr", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu", 
         "throughput", "15552000", "10000000000")  # 6 meses
 
 request("./pmp2/bbr/","bbr", "psmp-gn-bw-poz-pl.geant.org","perfsonar-ankara.ulakbim.gov.tr", 
@@ -186,7 +185,7 @@ request("./pmp2/bbr/","bbr", "psmp-gn-bw-lis-pt.geant.org","perfsonar-ankara.ula
 request("./pmp2/bbr/","bbr", "psmall.lut.ac.uk","psmp-gn-bw-vie-at.geant.org", 
         "throughput", "15552000", "10000000000")  # 6 meses
 request("./pmp2/bbr/","bbr", "perfsonar-sonda.rediris.es", "psmp-gn-bw-lis-pt.geant.org", 
-        "throughput", "15552000", "10000000000")  # 6 meses'''
+        "throughput", "15552000", "10000000000")  # 6 meses
 
 '''request("./pmp2/bbr/","bbr",  "perfsonar.restena.lu", "psmp-gn-bw-lis-pt.geant.org",
         "throughput", "15552000", "10000000000")  # 6 meses
@@ -206,7 +205,7 @@ request("./pmp2/bbr/","bbr",  "psmp-gn-bw-lis-pt.geant.org", "perfsonar-sonda.re
 
 print('protocolo CUBIC: ')
 
-'''request("./pmp2/cubic/","cubic", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu", 
+request("./pmp2/cubic/","cubic", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu", 
         "throughput", "15552000", "10000000000")  # 6 meses
 
 request("./pmp2/cubic/","cubic", "psmp-gn-bw-poz-pl.geant.org","perfsonar-ankara.ulakbim.gov.tr", 
@@ -219,7 +218,7 @@ request("./pmp2/cubic/","cubic", "psmp-gn-bw-lis-pt.geant.org","perfsonar-ankara
 request("./pmp2/cubic/","cubic", "psmall.lut.ac.uk","psmp-gn-bw-vie-at.geant.org", 
         "throughput", "15552000", "10000000000")  # 6 meses
 request("./pmp2/cubic/","cubic", "perfsonar-sonda.rediris.es", "psmp-gn-bw-lis-pt.geant.org", 
-        "throughput", "15552000", "10000000000")  # 6 meses'''
+        "throughput", "15552000", "10000000000")  # 6 meses
 
 '''request("./pmp2/cubic/","cubic",  "perfsonar.restena.lu", "psmp-gn-bw-lis-pt.geant.org",
         "throughput", "15552000", "10000000000")  # 6 meses
@@ -294,17 +293,17 @@ request_atraso("./pmp2/atraso/","atraso", "perfsonar-ankara.ulakbim.gov.tr","psm
 request_atraso("./pmp2/atraso/","atraso", "perfsonar.restena.lu","psmp-gn-owd-lis-pt.geant.org", "latencybg", 
                "15552000", "histogram-owdelay")'''
 
-request_atraso("./pmp2/atraso/","atraso", "perfsonar-sonda.rediris.es", "psmp-gn-owd-lis-pt.geant.org","latencybg", 
-               "15552000", "histogram-owdelay")
+# request_atraso("./pmp2/atraso/","atraso", "perfsonar-sonda.rediris.es", "psmp-gn-owd-lis-pt.geant.org","latencybg", 
+#                "15552000", "histogram-owdelay")
 
-request_atraso("./pmp2/atraso/","atraso", "psmall.lut.ac.uk", "psmp-gn-owd-vie-at.geant.org","latencybg", 
-               "15552000", "histogram-owdelay")
+# request_atraso("./pmp2/atraso/","atraso", "psmall.lut.ac.uk", "psmp-gn-owd-vie-at.geant.org","latencybg", 
+#                "15552000", "histogram-owdelay")
 
-request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-lis-pt.geant.org", "perfsonar-ankara.ulakbim.gov.tr","latencybg", 
-               "15552000", "histogram-owdelay")
+# request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-lis-pt.geant.org", "perfsonar-ankara.ulakbim.gov.tr","latencybg", 
+#                "15552000", "histogram-owdelay")
 
-request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-poz-pl.geant.org", "pspmp-anella.csuc.cat","latencybg", 
-               "15552000", "histogram-owdelay")
+# request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-poz-pl.geant.org", "pspmp-anella.csuc.cat","latencybg", 
+#                "15552000", "histogram-owdelay")
 
 '''request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-poz-pl.geant.org", "perfsonar-ankara.ulakbim.gov.tr","latencybg", 
                "15552000", "histogram-owdelay")
