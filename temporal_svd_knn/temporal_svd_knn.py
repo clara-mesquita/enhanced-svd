@@ -1,65 +1,6 @@
 import pandas as pd 
 import numpy as np 
 
-# ----------------------------
-# 1) PERIOD (n_lines) ESTIMATION
-# ----------------------------
-
-def estimate_period(y, min_period=4, max_period=None):
-    """
-    Pick period (n_lines) automatically using ACF peak with robust error handling
-    """
-    y = np.asarray(y, dtype=float)
-    n = len(y)
-    
-    # Handle edge cases
-    if n == 0:
-        return min_period
-    
-    # Set reasonable max_period if not provided
-    if max_period is None:
-        max_period = max(7, min(n // 4, 1000))
-    
-    # Ensure min_period and max_period are valid
-    min_period = max(1, min_period)
-    max_period = max(min_period, max_period)
-    
-    # For very short series, return a safe value
-    if n < min_period * 2:
-        return max(min_period, min(n, 8))
-    
-    try:
-        # Calculate ACF with robust error handling
-        acf_vals = _acf(y, max_period)
-        
-        # Ensure we have valid ACF values
-        if np.all(np.isnan(acf_vals)):
-            return min_period
-        
-        # Find the best lag in the valid range
-        valid_range = slice(min_period, min(max_period + 1, len(acf_vals)))
-        if valid_range.stop <= valid_range.start:
-            return min_period
-            
-        acf_subset = acf_vals[valid_range]
-        
-        # If all values are NaN, return default
-        if np.all(np.isnan(acf_subset)):
-            return min_period
-            
-        # Replace any remaining NaNs with -inf to ignore them
-        acf_subset = np.nan_to_num(acf_subset, nan=-np.inf)
-        
-        # Find the best lag
-        best_idx = np.argmax(acf_subset)
-        best_lag = min_period + best_idx
-        
-        return int(best_lag)
-        
-    except Exception as e:
-        # Fallback to default if any error occurs
-        return min_period
-
 def _acf(y, max_lag):
     """Biased ACF up to max_lag with robust error handling"""
 
