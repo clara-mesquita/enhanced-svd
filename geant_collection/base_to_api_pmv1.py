@@ -1,316 +1,117 @@
 import os
 import time
-from calendar import timegm
-from datetime import date, datetime
-
+from datetime import date, datetime, timedelta
 import requests
-from urllib3 import disable_warnings
+import json
 from urllib3.exceptions import InsecureRequestWarning
 
+# Otimizações e configurações
+# Removida a linha `disable_warnings(InsecureRequestWarning)` para garantir a segurança.
+# A requisição padrão do 'requests' já vem com o 'verify=True', 
+# o que valida o certificado SSL e protege contra ataques "man-in-the-middle".
+# O URL base foi fixado para o arquivo público do GÉANT PMP.
+base_url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
 today = date.today()
 
-#base = "http://monipe-central.rnp.br"
-base = "https://pmp-archive.geant.org"
+# Configurações dinâmicas
+# A faixa de tempo pode ser facilmente alterada aqui (em segundos).
+# 15552000 segundos = 6 meses
+TIME_RANGE = 15552000
+FOLDER = f"./pmp_throughput_data/{today.strftime('%Y-%m-%d')}"
+# O nome do tipo de evento para throughput.
+EVENT_TYPE = "throughput"
 
-def get_response(url, time_range):
-    cont = 0
-    while True:
-        header = {"time-range": time_range}
-        response = requests.get(url, params=header, verify=False)
-        if response.status_code == 200:
+# Função para fazer a requisição HTTP com tentativas limitadas e backoff
+def make_request_with_retries(url, params=None, max_retries=5, initial_wait=5):
+    """
+    Tenta fazer uma requisição GET com um número limitado de tentativas e backoff exponencial.
+    Isso torna o script mais robusto contra falhas temporárias de rede ou no servidor.
+    """
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, params=params, verify=True)
+            response.raise_for_status()  # Lança um erro para status de erro (4xx ou 5xx)
             return response
-        else:
-            cont = cont + 1 
-            print("Codigo do Status recebido {}. Tentando novamente em 1 min...".format(response.status_code))
-            print("Tentativa: {}".format(cont))
-            time.sleep(60)
+        except requests.exceptions.RequestException as e:
+            print(f"Erro na tentativa {attempt + 1}/{max_retries}: {e}")
+            if attempt < max_retries - 1:
+                wait_time = initial_wait * (2 ** attempt)
+                print(f"Tentando novamente em {wait_time} segundos...")
+                time.sleep(wait_time)
+            else:
+                print(f"Todas as {max_retries} tentativas falharam. Abortando.")
+                raise # Re-lança o erro após a última tentativa
+
+# Função principal para coletar os dados
+def collect_all_throughput_data():
+    """
+    Busca automaticamente todos os testes de throughput e coleta os dados.
+    """
+    # 1. Encontrar todos os testes de throughput disponíveis.
+    print(f"Buscando todos os testes de '{EVENT_TYPE}' disponíveis...")
+    metadata_params = {"pscheduler-test-type": EVENT_TYPE}
     
-def get_data(url, time_range):
-    response = get_response(url, time_range)
-    json_data = response.json()
-     
-    return json_data
-
-def request_by_metadata_key(url, type):
-    response = requests.get(url, verify=False)
-    #print('teste2: ', url)
-    json_data = response.json()
-    #print(response.status_code)
-    if (response.status_code == 200):
-        for obj in json_data["event-types"]:
-            if obj["event-type"] == type:
-                print(obj)
-                return obj
-    else:
-        return response.status_code
-
-def calc_mean(val):
-    values = []
-    for key, value in val.items():
-        values.append(float(key))
-    
-    return round(sum(values)/len(values),2)
-
-
-#coleta a vazao
-def request(folder, name, source, destination, type, time_range, target_bandwidth="9999999999"):
-    disable_warnings(InsecureRequestWarning)
-    #url = "http://monipe-central.rnp.br/esmond/perfsonar/archive/?"
-    url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
-    hearder = {"pscheduler-test-type": type, "source": source, "destination": destination}#, "bw-target-bandwidth": target_bandwidth, "time-range": time_range}
-    response = requests.get(url, params=hearder, verify=False)
-    
-    print('endereço', response.url)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    json_data = response.json()    
-    values = []
-    if (response.status_code == 200):
-        print("Ok")
-        bases = []
-        for obj in json_data:
-            types_list = obj['event-types']
-            for obj_types in types_list:
-                if obj_types.get('event-type') == type:
-                    bases.append(obj_types.get('base-uri'))
-                    break
-        with open(folder+" esmond data " + source + ' to ' + destination + ' ' + today.strftime("%m-%d-%Y")+".csv", "w") as f:
-            f.write(f"{'Timestamp'},{'Data'},{'Vazao'}\n")
-            for link in bases:
-                values = get_data(base + link, time_range)
-                for value in values:
-                    f.write(f"{value['ts']},{datetime.fromtimestamp(int(value['ts'])).strftime('%Y-%m-%d %H:%M:%S')},{str(value['val'])}\n")
-        f.close()
-
-def request_traceroute(folder, name, source, destination, type, time_range):
-    disable_warnings(InsecureRequestWarning)
-    limite = "?limit=26400"
-    url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
-    header = {"pscheduler-test-type": type, "source": source,
-              "destination": destination, "time-range": time_range}
-    response = requests.get(url, params=header, verify=False)
-
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    json_data = response.json()
-    #get_data(url, time_range)
-    #response.json()
-    values = []
-    if (response.status_code == 200):
-        print("Ok")
-        bases = []
-        for obj in json_data:
-            types_list = obj['event-types']
-            for obj_types in types_list:
-                if obj_types.get('event-type') == "packet-trace":
-                    bases.append(obj_types.get('base-uri'))
-                    break
-    
-    with open(folder + name +" esmond data " + source + ' to ' + destination + ' ' + today.strftime("%m-%d-%Y")+".csv", "w") as f:
-        #f.write(f"{'Timestamp'},{'Data'}, {'xxxxx'}\n")
+    try:
+        metadata_response = make_request_with_retries(base_url, metadata_params)
+        measurements = metadata_response.json()
+        print(f"Encontrados {len(measurements)} testes de throughput.")
         
-        for link in bases:
+    except requests.exceptions.RequestException as e:
+        print(f"Não foi possível obter a lista de medições. Verifique o URL ou a conexão: {e}")
+        return
+
+    if not os.path.exists(FOLDER):
+        os.makedirs(FOLDER)
+        print(f"Pasta de saída criada: {FOLDER}")
+        
+    # 2. Iterar sobre cada teste e coletar os dados.
+    processed_count = 0
+    for measurement in measurements:
+        source = measurement.get('source')
+        destination = measurement.get('destination')
+        
+        if not source or not destination:
+            continue
+
+        base_uri = None
+        for event in measurement.get('event-types',):
+            if event.get('event-type') == EVENT_TYPE:
+                base_uri = event.get('base-uri')
+                break
+
+        if not base_uri:
+            print(f"Skipping measurement from {source} to {destination}, no '{EVENT_TYPE}' URI found.")
+            continue
+        
+        file_name = f"{source}_to_{destination}_{EVENT_TYPE}_{today.strftime('%Y-%m-%d')}.csv"
+        file_path = os.path.join(FOLDER, file_name)
+        
+        print(f"Processando teste de {source} para {destination}...")
+
+        # 3. Coletar os dados de série temporal para o teste específico.
+        data_url = "https://pmp-archive.geant.org" + base_uri
+        data_params = {"time-range": TIME_RANGE}
+
+        try:
+            data_response = make_request_with_retries(data_url, data_params)
+            time_series_data = data_response.json()
+
+            # 4. Escrever os dados no arquivo CSV.
+            with open(file_path, "w", newline='') as f:
+                f.write("timestamp,data,vazao_bps\n")
+                for entry in time_series_data:
+                    ts = entry.get('ts')
+                    val = entry.get('val')
+                    if ts is not None and val is not None:
+                        # O PerfSONAR armazena o valor de vazão em bits por segundo (bps)
+                        f.write(f"{ts},{datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')},{val}\n")
+            print(f"Dados salvos com sucesso em {file_path}")
+            processed_count += 1
             
-            values: list = get_data(base + link + limite, time_range)
-            #print('values', values)
-        
-            for obj in values:
-                #ip_hostname_list = [item['ip'] for item in value['val']]
-                f.write(f"{int(obj['ts'])},{datetime.fromtimestamp(int(obj['ts'])).strftime('%Y-%m-%d %H:%M:%S')},")
-                for dado in range(len(obj['val'])):
-                    try:
-                        #print(value['val'][ip]['ip'], value['val'][ip]['hostname'])
-                        if dado != len(obj['val']) - 1:
-                            f.write(f"{obj['val'][dado]['hostname']},")
-                            #f.write(f"{obj['val'][dado]['ip']}, {obj['val'][dado]['hostname']},")
-                        else:
-                            f.write(f"{obj['val'][dado]['hostname']}\n")
-                            #f.write(f"{obj['val'][dado]['ip']}, {obj['val'][dado]['hostname']}")
-                    except BaseException:
-                        if dado != len(obj['val']) - 1:
-                            f.write("'No Hostname',")
-                            #f.write("'No Ip', 'No Hostname',")
-                        else:
-                            f.write("'No Hostname'\n")
-                            #f.write("'No Ip', 'No Hostname'")
-                #f.write('\n')
-           
-    f.close()
-    
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao obter dados para {source} para {destination}: {e}")
+            
+    print(f"\nColeta de dados concluída. {processed_count} arquivos gerados.")
 
-def request_atraso(folder, name, source, destination, type, time_range, label):
-    disable_warnings(InsecureRequestWarning)
-    limite1 = "?limit=285000"
-    url = "https://pmp-archive.geant.org/esmond/perfsonar/archive/?"
-    header = {"pscheduler-test-type": type, "source": source,
-              "destination": destination, "time-range": time_range}
-    
-    response = requests.get(url, params=header, verify=False)
-    print(response.url)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    json_data = response.json()
-    values = []
-    if (response.status_code == 200):
-        print("Ok")
-        bases = []
-        for obj in json_data:
-            types_list = obj['event-types']
-            for obj_types in types_list:
-                if obj_types.get('event-type') == label:
-                    bases.append(obj_types.get('base-uri'))
-                    break
-        with open(folder + name +" esmond data " + source + ' to ' + destination + ' ' + today.strftime("%m-%d-%Y")+".csv", "w") as f:
-        #with open(folder +name+" esmond data " + source.split('-')[1] + '-' + destination.split('-')[1] + ' ' + today.strftime("%m-%d-%Y")+".csv", "w") as f:
-            f.write(f"{'Timestamp'},{'Data'},{'Atraso(ms)'}\n")
-            for link in bases:
-                values = get_data(base + link + limite1, time_range)
-                for value in values:
-                    f.write(f"{value['ts']},{datetime.fromtimestamp(int(value['ts'])).strftime('%Y-%m-%d %H:%M:%S')},{calc_mean(value['val'])}\n")
-        f.close()
-
-
-
-
-request("./pmp2/bbr/","bbr", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/bbr/","bbr", "psmp-gn-bw-poz-pl.geant.org","perfsonar-ankara.ulakbim.gov.tr", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/bbr/","bbr", "psmp-gn-bw-poz-pl.geant.org","pspmp-anella.csuc.cat", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/bbr/","bbr", "psmp-gn-bw-lis-pt.geant.org","perfsonar-ankara.ulakbim.gov.tr", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/bbr/","bbr", "psmall.lut.ac.uk","psmp-gn-bw-vie-at.geant.org", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/bbr/","bbr", "perfsonar-sonda.rediris.es", "psmp-gn-bw-lis-pt.geant.org", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-'''request("./pmp2/bbr/","bbr",  "perfsonar.restena.lu", "psmp-gn-bw-lis-pt.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/bbr/","bbr", "perfsonar-ankara.ulakbim.gov.tr", "psmp-gn-bw-poz-pl.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/bbr/","bbr", "pspmp-anella.csuc.cat", "psmp-gn-bw-poz-pl.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/bbr/","bbr", "perfsonar-ankara.ulakbim.gov.tr", "psmp-gn-bw-lis-pt.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/bbr/","bbr", "psmp-gn-bw-vie-at.geant.org", "psmall.lut.ac.uk",
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/bbr/","bbr",  "psmp-gn-bw-lis-pt.geant.org", "perfsonar-sonda.rediris.es",
-        "throughput", "15552000", "10000000000")  # 6 meses'''
-
-
-print('protocolo CUBIC: ')
-
-request("./pmp2/cubic/","cubic", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/cubic/","cubic", "psmp-gn-bw-poz-pl.geant.org","perfsonar-ankara.ulakbim.gov.tr", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/cubic/","cubic", "psmp-gn-bw-poz-pl.geant.org","pspmp-anella.csuc.cat", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/cubic/","cubic", "psmp-gn-bw-lis-pt.geant.org","perfsonar-ankara.ulakbim.gov.tr", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/cubic/","cubic", "psmall.lut.ac.uk","psmp-gn-bw-vie-at.geant.org", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/cubic/","cubic", "perfsonar-sonda.rediris.es", "psmp-gn-bw-lis-pt.geant.org", 
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-'''request("./pmp2/cubic/","cubic",  "perfsonar.restena.lu", "psmp-gn-bw-lis-pt.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/cubic/","cubic", "perfsonar-ankara.ulakbim.gov.tr", "psmp-gn-bw-poz-pl.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-
-request("./pmp2/cubic/","cubic", "pspmp-anella.csuc.cat", "psmp-gn-bw-poz-pl.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/cubic/","cubic", "perfsonar-ankara.ulakbim.gov.tr", "psmp-gn-bw-lis-pt.geant.org",
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/cubic/","cubic", "psmp-gn-bw-vie-at.geant.org", "psmall.lut.ac.uk",
-        "throughput", "15552000", "10000000000")  # 6 meses
-request("./pmp2/cubic/","cubic",  "psmp-gn-bw-lis-pt.geant.org", "perfsonar-sonda.rediris.es",
-        "throughput", "15552000", "10000000000")  # 6 meses'''
-
-#print('Traceroute0')
-#request_traceroute("./pmp2/traceroute/", "traceroute", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu",
-#                      "trace", "15552000")
-print('Traceroute: ')
-'''request_traceroute("./pmp2/traceroute/", "traceroute", "psmp-gn-bw-lis-pt.geant.org", "perfsonar.restena.lu",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute", "psmp-gn-bw-poz-pl.geant.org", "perfsonar-ankara.ulakbim.gov.tr",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute", "psmp-gn-bw-poz-pl.geant.org", "pspmp-anella.csuc.cat",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute", "psmp-gn-bw-lis-pt.geant.org", "perfsonar-ankara.ulakbim.gov.tr",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute", "psmall.lut.ac.uk", "psmp-gn-bw-vie-at.geant.org",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute", "perfsonar-sonda.rediris.es", "psmp-gn-bw-lis-pt.geant.org",
-                      "trace", "15552000")'''
-
-'''request_traceroute("./pmp2/traceroute/", "traceroute", "perfsonar.restena.lu", "psmp-gn-bw-lis-pt.geant.org",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute", "perfsonar-ankara.ulakbim.gov.tr", "psmp-gn-bw-poz-pl.geant.org",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute",  "pspmp-anella.csuc.cat", "psmp-gn-bw-poz-pl.geant.org",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute",  "perfsonar-ankara.ulakbim.gov.tr", "psmp-gn-bw-lis-pt.geant.org",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute",  "psmp-gn-bw-vie-at.geant.org", "psmall.lut.ac.uk",
-                      "trace", "15552000")
-
-request_traceroute("./pmp2/traceroute/", "traceroute",  "psmp-gn-bw-lis-pt.geant.org", "perfsonar-sonda.rediris.es",
-                      "trace", "15552000")'''
-
-'''request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-lis-pt.geant.org","perfsonar-sonda.rediris.es", "latencybg", 
-               "15552000", "histogram-owdelay")
-
-request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-vie-at.geant.org","psmall.lut.ac.uk", "latencybg", 
-               "15552000", "histogram-owdelay")
-
-request_atraso("./pmp2/atraso/","atraso", "perfsonar-ankara.ulakbim.gov.tr","psmp-gn-owd-lis-pt.geant.org", "latencybg", 
-               "15552000", "histogram-owdelay")
-
-request_atraso("./pmp2/atraso/","atraso", "pspmp-anella.csuc.cat","psmp-gn-owd-poz-pl.geant.org", "latencybg", 
-               "15552000", "histogram-owdelay")
-
-request_atraso("./pmp2/atraso/","atraso", "perfsonar-ankara.ulakbim.gov.tr","psmp-gn-owd-poz-pl.geant.org", "latencybg", 
-               "15552000", "histogram-owdelay")
-
-request_atraso("./pmp2/atraso/","atraso", "perfsonar.restena.lu","psmp-gn-owd-lis-pt.geant.org", "latencybg", 
-               "15552000", "histogram-owdelay")'''
-
-# request_atraso("./pmp2/atraso/","atraso", "perfsonar-sonda.rediris.es", "psmp-gn-owd-lis-pt.geant.org","latencybg", 
-#                "15552000", "histogram-owdelay")
-
-# request_atraso("./pmp2/atraso/","atraso", "psmall.lut.ac.uk", "psmp-gn-owd-vie-at.geant.org","latencybg", 
-#                "15552000", "histogram-owdelay")
-
-# request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-lis-pt.geant.org", "perfsonar-ankara.ulakbim.gov.tr","latencybg", 
-#                "15552000", "histogram-owdelay")
-
-# request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-poz-pl.geant.org", "pspmp-anella.csuc.cat","latencybg", 
-#                "15552000", "histogram-owdelay")
-
-'''request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-poz-pl.geant.org", "perfsonar-ankara.ulakbim.gov.tr","latencybg", 
-               "15552000", "histogram-owdelay")
-
-request_atraso("./pmp2/atraso/","atraso", "psmp-gn-owd-lis-pt.geant.org", "perfsonar.restena.lu","latencybg", 
-               "15552000", "histogram-owdelay")'''
-
-
-'''request("datasets vazao/original/cubic/", "cubic", "monipe-se-banda.rnp.br", "monipe-ac-banda.rnp.br",
-       "throughput", "15552000")  # 6 meses'''
+if __name__ == "__main__":
+    collect_all_throughput_data()
