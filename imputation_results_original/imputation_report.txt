@@ -1,0 +1,264 @@
+================================================================================
+IMPUTATION EVALUATION REPORT
+================================================================================
+
+
+================================================================================
+Dataset: esmond data perfsonar-ankara.ulakbim.gov.tr to psmp-gn-bw-lis-pt.geant.org 10-24-2023_6h
+================================================================================
+
+Dataset shape: (714, 2)
+Missing points: 177 (24.8%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        177
+SVD_KNN_Hankel                N/A          N/A        177
+Kalman                        N/A          N/A        177
+ARIMA                         N/A          N/A        177
+HoltWinters                   N/A          N/A        177
+Linear                        N/A          N/A        177
+KNN_Sklearn                   N/A          N/A        177
+Spline                        N/A          N/A        177
+Mean                          N/A          N/A        177
+LOCF                          N/A          N/A        177
+SoftImpute                    N/A          N/A        177
+IterativeSVD                  N/A          N/A        177
+
+
+================================================================================
+Dataset: esmond data perfsonar-ankara.ulakbim.gov.tr to psmp-gn-bw-poz-pl.geant.org 10-24-2023_6h
+================================================================================
+
+Dataset shape: (716, 2)
+Missing points: 189 (26.4%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        189
+SVD_KNN_Hankel                N/A          N/A        189
+Kalman                        N/A          N/A        189
+ARIMA                         N/A          N/A        189
+HoltWinters                   N/A          N/A        189
+Linear                        N/A          N/A        189
+KNN_Sklearn                   N/A          N/A        189
+Spline                        N/A          N/A        189
+Mean                          N/A          N/A        189
+LOCF                          N/A          N/A        189
+SoftImpute                    N/A          N/A        189
+IterativeSVD                  N/A          N/A        189
+
+
+================================================================================
+Dataset: esmond data perfsonar-sonda.rediris.es to psmp-gn-bw-lis-pt.geant.org 10-24-2023_6h
+================================================================================
+
+Dataset shape: (239, 2)
+Missing points: 86 (36.0%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A         86
+SVD_KNN_Hankel                N/A          N/A         86
+Kalman                        N/A          N/A         86
+ARIMA                         N/A          N/A         86
+HoltWinters                   N/A          N/A         86
+Linear                        N/A          N/A         86
+KNN_Sklearn                   N/A          N/A         86
+Spline                        N/A          N/A         86
+Mean                          N/A          N/A         86
+LOCF                          N/A          N/A         86
+SoftImpute                    N/A          N/A         86
+IterativeSVD                  N/A          N/A         86
+
+
+================================================================================
+Dataset: esmond data psmall.lut.ac.uk to psmp-gn-bw-vie-at.geant.org 10-24-2023_6h
+================================================================================
+
+Dataset shape: (720, 2)
+Missing points: 232 (32.2%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        232
+SVD_KNN_Hankel                N/A          N/A        232
+Kalman                        N/A          N/A        232
+ARIMA                         N/A          N/A        232
+HoltWinters                   N/A          N/A        232
+Linear                        N/A          N/A        232
+KNN_Sklearn                   N/A          N/A        232
+Spline                        N/A          N/A        232
+Mean                          N/A          N/A        232
+LOCF                          N/A          N/A        232
+SoftImpute                    N/A          N/A        232
+IterativeSVD                  N/A          N/A        232
+
+
+================================================================================
+Dataset: esmond data psmp-gn-bw-lis-pt.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023_6h
+================================================================================
+
+Dataset shape: (716, 2)
+Missing points: 134 (18.7%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        134
+SVD_KNN_Hankel                N/A          N/A        134
+Kalman                        N/A          N/A        134
+ARIMA                         N/A          N/A        134
+HoltWinters                   N/A          N/A        134
+Linear                        N/A          N/A        134
+KNN_Sklearn                   N/A          N/A        134
+Spline                        N/A          N/A        134
+Mean                          N/A          N/A        134
+LOCF                          N/A          N/A        134
+SoftImpute                    N/A          N/A        134
+IterativeSVD                  N/A          N/A        134
+
+
+================================================================================
+Dataset: esmond data psmp-gn-bw-lis-pt.geant.org to perfsonar.restena.lu 10-24-2023_6h
+================================================================================
+
+Dataset shape: (716, 2)
+Missing points: 144 (20.1%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        144
+SVD_KNN_Hankel                N/A          N/A        144
+Kalman                        N/A          N/A        144
+ARIMA                         N/A          N/A        144
+HoltWinters                   N/A          N/A        144
+Linear                        N/A          N/A        144
+KNN_Sklearn                   N/A          N/A        144
+Spline                        N/A          N/A        144
+Mean                          N/A          N/A        144
+LOCF                          N/A          N/A        144
+SoftImpute                    N/A          N/A        144
+IterativeSVD                  N/A          N/A        144
+
+
+================================================================================
+Dataset: esmond data psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023_6h
+================================================================================
+
+Dataset shape: (716, 2)
+Missing points: 124 (17.3%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        124
+SVD_KNN_Hankel                N/A          N/A        124
+Kalman                        N/A          N/A        124
+ARIMA                         N/A          N/A        124
+HoltWinters                   N/A          N/A        124
+Linear                        N/A          N/A        124
+KNN_Sklearn                   N/A          N/A        124
+Spline                        N/A          N/A        124
+Mean                          N/A          N/A        124
+LOCF                          N/A          N/A        124
+SoftImpute                    N/A          N/A        124
+IterativeSVD                  N/A          N/A        124
+
+
+================================================================================
+Dataset: esmond data psmp-gn-bw-poz-pl.geant.org to pspmp-anella.csuc.cat 10-24-2023_6h
+================================================================================
+
+Dataset shape: (717, 2)
+Missing points: 106 (14.8%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        106
+SVD_KNN_Hankel                N/A          N/A        106
+Kalman                        N/A          N/A        106
+ARIMA                         N/A          N/A        106
+HoltWinters                   N/A          N/A        106
+Linear                        N/A          N/A        106
+KNN_Sklearn                   N/A          N/A        106
+Spline                        N/A          N/A        106
+Mean                          N/A          N/A        106
+LOCF                          N/A          N/A        106
+SoftImpute                    N/A          N/A        106
+IterativeSVD                  N/A          N/A        106
+
+
+================================================================================
+Dataset: esmond data psmp-gn-bw-vie-at.geant.org to psmall.lut.ac.uk 10-24-2023_6h
+================================================================================
+
+Dataset shape: (720, 2)
+Missing points: 134 (18.6%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        134
+SVD_KNN_Hankel                N/A          N/A        134
+Kalman                        N/A          N/A        134
+ARIMA                         N/A          N/A        134
+HoltWinters                   N/A          N/A        134
+Linear                        N/A          N/A        134
+KNN_Sklearn                   N/A          N/A        134
+Spline                        N/A          N/A        134
+Mean                          N/A          N/A        134
+LOCF                          N/A          N/A        134
+SoftImpute                    N/A          N/A        134
+IterativeSVD                  N/A          N/A        134
+
+
+================================================================================
+Dataset: esmond data pspmp-anella.csuc.cat to psmp-gn-bw-poz-pl.geant.org 10-24-2023_6h
+================================================================================
+
+Dataset shape: (716, 2)
+Missing points: 270 (37.7%)
+
+Method Performance:
+------------------------------------------------------------
+Method                       RMSE          MAE     Points
+------------------------------------------------------------
+SVD_KNN                       N/A          N/A        270
+SVD_KNN_Hankel                N/A          N/A        270
+Kalman                        N/A          N/A        270
+ARIMA                         N/A          N/A        270
+HoltWinters                   N/A          N/A        270
+Linear                        N/A          N/A        270
+KNN_Sklearn                   N/A          N/A        270
+Spline                        N/A          N/A        270
+Mean                          N/A          N/A        270
+LOCF                          N/A          N/A        270
+SoftImpute                    N/A          N/A        270
+IterativeSVD                  N/A          N/A        270
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+All imputations completed successfully!
+Processed 10 files
+Generated 120 imputation results
+
+Summary saved to: imputation_results_original/imputation_summary.csv

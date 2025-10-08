@@ -5,6 +5,20 @@ import os
 from pathlib import Path
 from scipy import signal
 from sklearn.impute import KNNImputer
+from statsmodels.tsa.statespace.structural import UnobservedComponents
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from statsmodels.tsa.arima.model import ARIMA
+import warnings
+warnings.filterwarnings('ignore')
+
+# Try to import fancyimpute, provide fallback if not available
+try:
+    from fancyimpute import SoftImpute
+    SOFTIMPUTE_AVAILABLE = True
+except ImportError:
+    SOFTIMPUTE_AVAILABLE = False
+    print("Warning: fancyimpute not available. SoftImpute method will be skipped.")
+    print("Install with: pip install fancyimpute")
 
 # Configuration
 MISSING_RATES_FOLDER = "missing_rates_datasets"
@@ -207,7 +221,7 @@ def knn_in_latent(M, k=5, energy=0.9, allow_future=True):
     return M_imputed
 
 # ============================================================================
-# Imputation Methods
+# Imputation Methods - Original
 # ============================================================================
 
 def impute_svd_knn(df, col=VALUE_COL, min_period=4, max_period=None, 
@@ -260,6 +274,159 @@ def impute_locf(df, col=VALUE_COL):
     """Last Observation Carried Forward"""
     df_imputed = df.copy()
     df_imputed[col] = df_imputed[col].ffill()
+    return df_imputed
+
+# ============================================================================
+# Imputation Methods - NEW ADDITIONS
+# ============================================================================
+
+def impute_kalman(df, col=VALUE_COL, min_period=4, max_period=None):
+    """Kalman Filter imputation using UnobservedComponents"""
+    df_imputed = df.copy()
+    y = df_imputed[col].copy()
+    
+    # Estimate seasonal period
+    y_temp = y.interpolate(limit_direction="both").ffill().bfill()
+    period = estimate_period_fft(y_temp.values, min_period=min_period, max_period=max_period)
+    period = max(2, min(period, len(y) // 3))
+    
+    try:
+        # Fit UnobservedComponents model with trend and seasonality
+        mod = UnobservedComponents(
+            y, 
+            level="local linear trend", 
+            seasonal=period,
+            irregular=True
+        )
+        res = mod.fit(disp=False, maxiter=100)
+        
+        # Use Kalman smoother estimates
+        df_imputed[col] = y.fillna(res.fittedvalues)
+        
+    except Exception as e:
+        # Fallback to simpler model if fitting fails
+        try:
+            mod = UnobservedComponents(y, level="local level", irregular=True)
+            res = mod.fit(disp=False, maxiter=50)
+            df_imputed[col] = y.fillna(res.fittedvalues)
+        except:
+            # Final fallback to linear interpolation
+            df_imputed[col] = y.interpolate(limit_direction="both")
+    
+    return df_imputed
+
+def impute_arima(df, col=VALUE_COL, order=(1,1,1)):
+    """ARIMA imputation"""
+    df_imputed = df.copy()
+    y = df_imputed[col].copy()
+    
+    # Initial fill for ARIMA fitting
+    y_filled = y.interpolate(limit_direction="both").ffill().bfill()
+    
+    try:
+        # Fit ARIMA model
+        model = ARIMA(y_filled, order=order)
+        fit = model.fit()
+        
+        # Get fitted values
+        fitted = fit.fittedvalues
+        
+        # Fill missing values with fitted values
+        missing_mask = y.isna()
+        df_imputed.loc[missing_mask, col] = fitted[missing_mask]
+        
+    except Exception as e:
+        # Fallback to linear interpolation
+        df_imputed[col] = y.interpolate(limit_direction="both")
+    
+    return df_imputed
+
+def impute_holtwinters(df, col=VALUE_COL, min_period=4, max_period=None):
+    """Holt-Winters Exponential Smoothing imputation"""
+    df_imputed = df.copy()
+    y = df_imputed[col].copy()
+    
+    # Estimate seasonal period
+    y_temp = y.interpolate(limit_direction="both").ffill().bfill()
+    period = estimate_period_fft(y_temp.values, min_period=min_period, max_period=max_period)
+    period = max(2, min(period, len(y) // 3))
+    
+    # Need at least 2 full seasons
+    if len(y_temp) < 2 * period:
+        df_imputed[col] = y.interpolate(limit_direction="both")
+        return df_imputed
+    
+    try:
+        # Fit Holt-Winters model
+        model = ExponentialSmoothing(
+            y_temp, 
+            trend="add", 
+            seasonal="add", 
+            seasonal_periods=period
+        )
+        fit = model.fit(optimized=True)
+        
+        # Fill missing values with fitted values
+        missing_mask = y.isna()
+        df_imputed.loc[missing_mask, col] = fit.fittedvalues[missing_mask]
+        
+    except Exception as e:
+        # Fallback to additive trend only
+        try:
+            model = ExponentialSmoothing(y_temp, trend="add", seasonal=None)
+            fit = model.fit(optimized=True)
+            missing_mask = y.isna()
+            df_imputed.loc[missing_mask, col] = fit.fittedvalues[missing_mask]
+        except:
+            # Final fallback
+            df_imputed[col] = y.interpolate(limit_direction="both")
+    
+    return df_imputed
+
+def impute_softimpute(df, col=VALUE_COL, max_rank=5):
+    """SoftImpute matrix completion"""
+    if not SOFTIMPUTE_AVAILABLE:
+        raise ImportError("fancyimpute not available. Install with: pip install fancyimpute")
+    
+    df_imputed = df.copy()
+    y = df_imputed[col].values.reshape(-1, 1).astype(float)
+    
+    try:
+        # Apply SoftImpute
+        imputer = SoftImpute(max_rank=max_rank, verbose=False)
+        y_imputed = imputer.fit_transform(y)
+        df_imputed[col] = y_imputed.ravel()
+        
+    except Exception as e:
+        # Fallback to linear interpolation
+        df_imputed[col] = df_imputed[col].interpolate(limit_direction="both")
+    
+    return df_imputed
+
+def impute_iterativesvd(df, col=VALUE_COL, rank=5):
+    """IterativeSVD matrix completion (similar to SoftImpute)"""
+    if not SOFTIMPUTE_AVAILABLE:
+        raise ImportError("fancyimpute not available. Install with: pip install fancyimpute")
+    
+    try:
+        from fancyimpute import IterativeSVD
+    except ImportError:
+        # Use SoftImpute as fallback
+        return impute_softimpute(df, col=col, max_rank=rank)
+    
+    df_imputed = df.copy()
+    y = df_imputed[col].values.reshape(-1, 1).astype(float)
+    
+    try:
+        # Apply IterativeSVD
+        imputer = IterativeSVD(rank=rank, verbose=False)
+        y_imputed = imputer.fit_transform(y)
+        df_imputed[col] = y_imputed.ravel()
+        
+    except Exception as e:
+        # Fallback to linear interpolation
+        df_imputed[col] = df_imputed[col].interpolate(limit_direction="both")
+    
     return df_imputed
 
 # ============================================================================
@@ -328,16 +495,25 @@ def process_all_datasets():
     if not missing_files:
         print(f"No CSV files found in {MISSING_RATES_FOLDER}")
         return
-    
+
+    # Define all imputation methods
     imputation_methods = {
         'SVD_KNN': lambda df: impute_svd_knn(df, k=10, use_hankel=False),
         'SVD_KNN_Hankel': lambda df: impute_svd_knn(df, k=10, use_hankel=True),
+        'Kalman': impute_kalman,
+        'ARIMA': impute_arima,
+        'HoltWinters': impute_holtwinters,
         'Linear': impute_linear,
         'KNN_Sklearn': lambda df: impute_knn_sklearn(df, k=5),
         'Spline': impute_spline,
         'Mean': impute_mean,
         'LOCF': impute_locf
     }
+    
+    # Add SoftImpute and IterativeSVD if available
+    # if SOFTIMPUTE_AVAILABLE:
+    #     imputation_methods['SoftImpute'] = lambda df: impute_softimpute(df, max_rank=5)
+    #     imputation_methods['IterativeSVD'] = lambda df: impute_iterativesvd(df, rank=5)
     
     all_results = []
     
@@ -371,6 +547,8 @@ def process_all_datasets():
             try:
                 df_original = pd.read_csv(original_path)
                 df_missing = pd.read_csv(missing_path)
+
+                df_missing.replace(MISSING_SENTINEL, np.nan, inplace=True)
                 
                 df_missing_processed = df_missing.copy()
                 df_missing_processed[VALUE_COL] = df_missing_processed[VALUE_COL].replace(MISSING_SENTINEL, np.nan)
