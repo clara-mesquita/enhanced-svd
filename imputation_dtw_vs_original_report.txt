@@ -1,0 +1,40 @@
+================================================================================
+DTW (PREDICTION vs ORIGINAL) REPORT
+================================================================================
+
+Arquivos com referência encontrada: 99.2%
+Média DTW normalizado (global): 67930417.3448
+Mediana DTW normalizado (global): 50883201.5400
+Desvio-padrão DTW normalizado: 88393994.9436
+
+Resumo por método (quanto menor o 'mean', mais fiel ao original):
+                   count          mean           std           min           max
+imputation_method                                                               
+SVD_KNN               10  4.658311e+07  2.244898e+07  1.713723e+07  8.022263e+07
+SVD_KNN_Hankel        10  4.708259e+07  2.352812e+07  1.731829e+07  8.555948e+07
+KNN_Sklearn           10  4.799049e+07  2.413523e+07  1.735689e+07  8.381535e+07
+Mean                  10  4.809959e+07  2.410116e+07  1.720791e+07  8.445630e+07
+IterativeSVD          10  4.912954e+07  2.640915e+07  1.686133e+07  9.060821e+07
+Linear                10  4.952556e+07  2.694390e+07  1.708160e+07  9.061443e+07
+LOCF                  10  4.952844e+07  2.698212e+07  1.675547e+07  8.922146e+07
+HoltWinters           10  4.986693e+07  2.613462e+07  1.712542e+07  8.894965e+07
+ARIMA                 10  5.039280e+07  2.711601e+07  1.698220e+07  8.938774e+07
+Kalman                10  5.456010e+07  3.524745e+07  1.911600e+07  1.311915e+08
+Spline                10  5.897506e+07  2.940323e+07  1.784279e+07  9.663869e+07
+SoftImpute            10  2.634308e+08  2.212277e+08  3.670375e+07  8.606399e+08
+
+Top 5 melhores (menor DTW normalizado):
+  1. LOCF | psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023 | 10-24-2023 | DTW=16755465.0252
+  2. IterativeSVD | psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023 | 10-24-2023 | DTW=16861334.0108
+  3. ARIMA | psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023 | 10-24-2023 | DTW=16982200.7518
+  4. Linear | psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023 | 10-24-2023 | DTW=17081599.0252
+  5. HoltWinters | psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023 | 10-24-2023 | DTW=17125420.4137
+
+Top 5 piores (maior DTW normalizado):
+  1. SoftImpute | sonda.rediris.es -> psmp-gn-bw-lis-pt.geant.org | 10-24-2023 | DTW=860639914.6531
+  2. SoftImpute | pspmp-anella.csuc.cat to psmp-gn-bw-poz-pl.geant.org 10-24-2023 | 10-24-2023 | DTW=298130976.1583
+  3. SoftImpute | psmall.lut.ac.uk to psmp-gn-bw-vie-at.geant.org 10-24-2023 | 10-24-2023 | DTW=273114667.3387
+  4. SoftImpute | psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023 | 10-24-2023 | DTW=224285374.2590
+  5. SoftImpute | psmp-gn-bw-poz-pl.geant.org to pspmp-anella.csuc.cat 10-24-2023 | 10-24-2023 | DTW=209679109.7194
+
+================================================================================

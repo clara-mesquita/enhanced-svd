@@ -1,0 +1,102 @@
+================================================================================
+IMPUTATION METHOD IMPACT ANALYSIS REPORT
+================================================================================
+
+1. OVERALL STATISTICS
+--------------------------------------------------------------------------------
+Total files analyzed: 121
+Number of routes: 11
+Imputation methods tested: Mean, ARIMA, IterativeSVD, SVD_KNN, Spline, LOCF, HoltWinters, Linear, SoftImpute, SVD_KNN_Hankel, KNN_Sklearn, Unknown, Kalman
+
+2. IMPUTATION METHOD RANKING (by average RMSE)
+--------------------------------------------------------------------------------
+                           rmse                                                    mae                                         
+                           mean           std          min           max          mean           std          min           max
+imputation_method                                                                                                              
+Unknown            0.000000e+00           NaN         0.00  0.000000e+00  0.000000e+00           NaN         0.00  0.000000e+00
+SVD_KNN_Hankel     6.651827e+07  2.381838e+07  30335671.49  1.091713e+08  3.752553e+07  1.658603e+07  15842225.21  5.993340e+07
+KNN_Sklearn        6.665796e+07  2.523793e+07  30391699.73  1.162167e+08  3.668296e+07  1.772147e+07  15619653.69  7.066823e+07
+Mean               6.677800e+07  2.520139e+07  30242920.49  1.164386e+08  3.694364e+07  1.789308e+07  15341923.26  7.113521e+07
+SVD_KNN            6.833320e+07  2.477230e+07  31321968.56  1.134036e+08  4.093748e+07  1.912350e+07  15418862.93  6.805663e+07
+ARIMA              6.967367e+07  2.804905e+07  30415783.90  1.270643e+08  4.120007e+07  2.091549e+07  15829107.22  7.437939e+07
+HoltWinters        7.105774e+07  2.878158e+07  31117688.98  1.310458e+08  4.268054e+07  2.043700e+07  16722105.98  8.034388e+07
+IterativeSVD       7.152938e+07  2.788371e+07  34067794.86  1.264470e+08  4.460377e+07  2.194981e+07  16042408.52  8.116906e+07
+Linear             7.189442e+07  2.798540e+07  33965196.07  1.265423e+08  4.525601e+07  2.264583e+07  16336749.06  8.152695e+07
+LOCF               7.767359e+07  3.827243e+07  35326367.79  1.680921e+08  4.871532e+07  2.632372e+07  16934904.99  9.684400e+07
+Spline             9.723099e+07  3.633248e+07  55412061.86  1.575981e+08  6.810415e+07  3.241521e+07  22295019.36  1.151522e+08
+Kalman             1.057832e+08  8.909949e+07  35380524.37  3.419091e+08  6.854914e+07  5.427254e+07  25459090.63  2.023435e+08
+SoftImpute         3.906315e+08  1.858201e+08  70052624.67  8.352603e+08  3.154821e+08  1.705806e+08  53978767.80  7.298161e+08
+
+3. BEST IMPUTATION METHOD PER ROUTE
+--------------------------------------------------------------------------------
+                                                                    route best_imputation_rmse   rmse_value best_imputation_mae    mae_value
+                     ankara.ulakbim.gov.tr -> psmp-gn-bw-lis-pt.geant.org       SVD_KNN_Hankel 7.274596e+07         KNN_Sklearn 4.223125e+07
+                     ankara.ulakbim.gov.tr -> psmp-gn-bw-poz-pl.geant.org                 Mean 9.277457e+07                Mean 4.596954e+07
+                                                   imputation_summary.csv              Unknown 0.000000e+00             Unknown 0.000000e+00
+               psmall.lut.ac.uk to psmp-gn-bw-vie-at.geant.org 10-24-2023       SVD_KNN_Hankel 1.091713e+08      SVD_KNN_Hankel 5.993340e+07
+psmp-gn-bw-lis-pt.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023              SVD_KNN 5.861403e+07         KNN_Sklearn 1.926821e+07
+           psmp-gn-bw-lis-pt.geant.org to perfsonar.restena.lu 10-24-2023          KNN_Sklearn 5.177853e+07         KNN_Sklearn 3.435051e+07
+psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023              SVD_KNN 5.893062e+07                Mean 1.534192e+07
+          psmp-gn-bw-poz-pl.geant.org to pspmp-anella.csuc.cat 10-24-2023                ARIMA 3.797605e+07               ARIMA 2.453029e+07
+               psmp-gn-bw-vie-at.geant.org to psmall.lut.ac.uk 10-24-2023                 Mean 3.024292e+07         KNN_Sklearn 1.756727e+07
+          pspmp-anella.csuc.cat to psmp-gn-bw-poz-pl.geant.org 10-24-2023          KNN_Sklearn 7.203356e+07         KNN_Sklearn 4.406755e+07
+                          sonda.rediris.es -> psmp-gn-bw-lis-pt.geant.org          KNN_Sklearn 7.265390e+07         KNN_Sklearn 5.149896e+07
+
+4. WIN RATE ANALYSIS
+--------------------------------------------------------------------------------
+Based on RMSE:
+  KNN_Sklearn: 3 routes (27.3%)
+  SVD_KNN_Hankel: 2 routes (18.2%)
+  Mean: 2 routes (18.2%)
+  SVD_KNN: 2 routes (18.2%)
+  Unknown: 1 routes (9.1%)
+  ARIMA: 1 routes (9.1%)
+
+Based on MAE:
+  KNN_Sklearn: 6 routes (54.5%)
+  Mean: 2 routes (18.2%)
+  Unknown: 1 routes (9.1%)
+  SVD_KNN_Hankel: 1 routes (9.1%)
+  ARIMA: 1 routes (9.1%)
+
+5. DTW SIMILARITY ANALYSIS
+--------------------------------------------------------------------------------
+Average DTW distances between imputation methods:
+(Lower values indicate more similar prediction patterns)
+
+                       ARIMA   HoltWinters  IterativeSVD   KNN_Sklearn        Kalman          LOCF        Linear          Mean       SVD_KNN  SVD_KNN_Hankel    SoftImpute        Spline
+ARIMA           0.000000e+00  7.084843e+06  5.029112e+06  9.893957e+06  2.721248e+07  6.970358e+06  4.879226e+06  9.520550e+06  8.409117e+06    7.435950e+06  2.963398e+08  2.941394e+07
+HoltWinters     7.084843e+06  0.000000e+00  6.611107e+06  1.315265e+07  2.663534e+07  9.993869e+06  7.932809e+06  1.268473e+07  1.097598e+07    1.254245e+07  3.009097e+08  3.270890e+07
+IterativeSVD    5.029112e+06  6.611107e+06  0.000000e+00  1.279161e+07  2.586446e+07  6.595192e+06  2.315373e+06  1.195647e+07  1.068781e+07    1.056199e+07  2.989220e+08  2.839851e+07
+KNN_Sklearn     9.893957e+06  1.315265e+07  1.279161e+07  0.000000e+00  3.180452e+07  1.531911e+07  1.270175e+07  1.440883e+06  5.574827e+06    4.604979e+06  2.955543e+08  3.929650e+07
+Kalman          2.721248e+07  2.663534e+07  2.586446e+07  3.180452e+07  0.000000e+00  2.592688e+07  2.685866e+07  3.189939e+07  3.053923e+07    3.140439e+07  3.081995e+08  3.855079e+07
+LOCF            6.970358e+06  9.993869e+06  6.595192e+06  1.531911e+07  2.592688e+07  0.000000e+00  5.858092e+06  1.484943e+07  1.302340e+07    1.252701e+07  2.972388e+08  2.738763e+07
+Linear          4.879226e+06  7.932809e+06  2.315373e+06  1.270175e+07  2.685866e+07  5.858092e+06  0.000000e+00  1.201981e+07  1.135964e+07    1.025259e+07  2.972811e+08  2.668221e+07
+Mean            9.520550e+06  1.268473e+07  1.195647e+07  1.440883e+06  3.189939e+07  1.484943e+07  1.201981e+07  0.000000e+00  5.429231e+06    4.596055e+06  2.955873e+08  3.876916e+07
+SVD_KNN         8.409117e+06  1.097598e+07  1.068781e+07  5.574827e+06  3.053923e+07  1.302340e+07  1.135964e+07  5.429231e+06  0.000000e+00    4.602867e+06  3.024700e+08  3.800213e+07
+SVD_KNN_Hankel  7.435950e+06  1.254245e+07  1.056199e+07  4.604979e+06  3.140439e+07  1.252701e+07  1.025259e+07  4.596055e+06  4.602867e+06    0.000000e+00  2.993128e+08  3.771907e+07
+SoftImpute      2.963398e+08  3.009097e+08  2.989220e+08  2.955543e+08  3.081995e+08  2.972388e+08  2.972811e+08  2.955873e+08  3.024700e+08    2.993128e+08  0.000000e+00  2.754805e+08
+Spline          2.941394e+07  3.270890e+07  2.839851e+07  3.929650e+07  3.855079e+07  2.738763e+07  2.668221e+07  3.876916e+07  3.800213e+07    3.771907e+07  2.754805e+08  0.000000e+00
+
+Top 5 Most Similar Method Pairs:
+  1. KNN_Sklearn <-> Mean: 1336237.80
+  2. SVD_KNN_Hankel <-> SVD_KNN: 1438638.96
+  3. SVD_KNN_Hankel <-> Mean: 1459808.12
+  4. Mean <-> KNN_Sklearn: 1685054.58
+  5. HoltWinters <-> SVD_KNN: 2012768.35
+
+Top 5 Most Different Method Pairs:
+  1. Mean <-> SoftImpute: 348379179.45
+  2. Kalman <-> SoftImpute: 349311699.90
+  3. SoftImpute <-> IterativeSVD: 380596321.93
+  4. SVD_KNN <-> SoftImpute: 382742425.25
+  5. ARIMA <-> SoftImpute: 383057845.16
+
+DTW Statistics:
+  Mean normalized DTW distance: 63402344.18
+  Median normalized DTW distance: 12215698.63
+  Std normalized DTW distance: 132436767.28
+  Min normalized DTW distance: 469392.12
+  Max normalized DTW distance: 861474440.93
+
+================================================================================
