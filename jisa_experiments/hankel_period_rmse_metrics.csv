@@ -1,0 +1,2 @@
+method_filter,n_points,pearson_r,pearson_p_approx,spearman_rho,spearman_p_approx,ols_slope_rmse_per_period,ols_intercept
+Hankel,44,0.49806681595597785,0.00019733360564133662,0.05150375034471528,0.7382089991171497,200937.37037029688,34788924.0918678

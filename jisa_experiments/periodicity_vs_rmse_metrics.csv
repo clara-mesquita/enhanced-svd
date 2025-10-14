@@ -1,0 +1,9 @@
+metric,value
+"pearson_corr(periodicity_strength, rmse)",0.6395175105367285
+pearson_p_value,2.966149931959205e-06
+"spearman_corr(periodicity_strength, rmse)",0.6327603613779307
+spearman_p_value,4.0556713738959646e-06
+ols_slope_rmse_per_strength,943739050.6705208
+ols_slope_p_value,2.966149931959243e-06
+ols_intercept,24811740.79325255
+n_datasets,44.0

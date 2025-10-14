@@ -1,0 +1,13 @@
+ImputationMethod,count,mean,std,min,max
+KNN_Sklearn_imputed,9,86.39,10.57,59.72,95.49
+Mean_imputed,9,86.39,10.57,59.72,95.49
+SVD_KNN_Hankel_imputed,9,86.39,10.57,59.72,95.49
+SVD_KNN_imputed,9,86.35,10.7,59.33,95.49
+LOCF_imputed,10,82.19,10.68,59.72,95.49
+ARIMA_imputed,10,72.35,27.73,10.0,95.49
+HoltWinters_imputed,10,72.28,28.19,11.63,95.49
+IterativeSVD_imputed,10,71.05,29.55,11.63,95.49
+Linear_imputed,10,71.05,29.55,11.63,95.49
+Spline_imputed,9,57.52,32.0,0.0,95.49
+Kalman_imputed,10,41.43,41.35,0.0,95.49
+SoftImpute_imputed,10,9.46,23.53,0.0,73.78

@@ -693,24 +693,24 @@ class ImputationAnalyzer:
 if __name__ == "__main__":
     print("Starting Imputation Impact Analysis...")
     analyzer = ImputationAnalyzer(
-        json_file='evaluation_rmse_mae.json',
+        json_file='evaluation_rmse_mae_arima.json',
         original_pref_folder='geant-datasets',         # preferência 1
         aggregated_folder='aggregated_6h_datasets'     # fallback
     )
 
     # Relatório geral (mantido)
     print("\nGenerating analysis report (between methods)...")
-    analyzer.generate_report("imputation_analysis_report_dtw_between_methods.txt")
+    analyzer.generate_report("imputation_analysis_report_dtw_between_methods_arima.txt")
 
     # Visualizações de desempenho e DTW (entre métodos)
     print("\nCreating visualizations (performance + between-methods DTW)...")
-    analyzer.plot_performance_comparison("imputation_comparison_dtw.png")
-    analyzer.plot_dtw_analysis("dtw_analysis_between_methods.png")
+    analyzer.plot_performance_comparison("imputation_comparison_dtw_arima.png")
+    analyzer.plot_dtw_analysis("dtw_analysis_between_methods_arima.png")
 
     # NOVO: DTW vs Original (prefer geant, agrega para 6H se necessário)
     print("\nCreating DTW vs Original visualizations...")
-    analyzer.plot_dtw_vs_original("dtw_vs_original.png")
-    analyzer.generate_report_dtw_vs_original("imputation_dtw_vs_original_report.txt")
+    analyzer.plot_dtw_vs_original("dtw_vs_original_arima.png")
+    analyzer.generate_report_dtw_vs_original("imputation_dtw_vs_original_report_arima.txt")
 
     # Export detalhado
     print("\nExporting detailed results...")

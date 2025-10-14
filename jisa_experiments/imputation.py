@@ -11,19 +11,13 @@ from statsmodels.tsa.arima.model import ARIMA
 import warnings
 warnings.filterwarnings('ignore')
 
-# Try to import fancyimpute, provide fallback if not available
-try:
-    from fancyimpute import SoftImpute
-    SOFTIMPUTE_AVAILABLE = True
-except ImportError:
-    SOFTIMPUTE_AVAILABLE = False
-    print("Warning: fancyimpute not available. SoftImpute method will be skipped.")
-    print("Install with: pip install fancyimpute")
+
 
 # Configuration
 MISSING_RATES_FOLDER = "missing_rates_datasets"
 LONGEST_INTERVAL_FOLDER = "longest_interval_datasets"
-OUTPUT_FOLDER = "imputation_results"
+OUTPUT_FOLDER = "imputation_results_final_longest"
+IMPUTED_DATASETS_FOLDER = os.path.join(OUTPUT_FOLDER, "imputed_datasets_all")
 FIGURES_FOLDER = os.path.join(OUTPUT_FOLDER, "figures")
 REPORT_FILE = os.path.join(OUTPUT_FOLDER, "imputation_report.txt")
 TIMESTAMP_COL = "Data"
@@ -35,6 +29,7 @@ def setup_folders():
     """Create necessary output folders"""
     Path(OUTPUT_FOLDER).mkdir(exist_ok=True)
     Path(FIGURES_FOLDER).mkdir(exist_ok=True)
+    Path(IMPUTED_DATASETS_FOLDER).mkdir(parents=True, exist_ok=True)  # NEW
 
 # ============================================================================
 # FFT Period Estimation
@@ -383,51 +378,51 @@ def impute_holtwinters(df, col=VALUE_COL, min_period=4, max_period=None):
     
     return df_imputed
 
-def impute_softimpute(df, col=VALUE_COL, max_rank=5):
-    """SoftImpute matrix completion"""
-    if not SOFTIMPUTE_AVAILABLE:
-        raise ImportError("fancyimpute not available. Install with: pip install fancyimpute")
+# def impute_softimpute(df, col=VALUE_COL, max_rank=5):
+#     """SoftImpute matrix completion"""
+#     if not SOFTIMPUTE_AVAILABLE:
+#         raise ImportError("fancyimpute not available. Install with: pip install fancyimpute")
     
-    df_imputed = df.copy()
-    y = df_imputed[col].values.reshape(-1, 1).astype(float)
+#     df_imputed = df.copy()
+#     y = df_imputed[col].values.reshape(-1, 1).astype(float)
     
-    try:
-        # Apply SoftImpute
-        imputer = SoftImpute(max_rank=max_rank, verbose=False)
-        y_imputed = imputer.fit_transform(y)
-        df_imputed[col] = y_imputed.ravel()
+#     try:
+#         # Apply SoftImpute
+#         imputer = SoftImpute(max_rank=max_rank, verbose=False)
+#         y_imputed = imputer.fit_transform(y)
+#         df_imputed[col] = y_imputed.ravel()
         
-    except Exception as e:
-        # Fallback to linear interpolation
-        df_imputed[col] = df_imputed[col].interpolate(limit_direction="both")
+#     except Exception as e:
+#         # Fallback to linear interpolation
+#         df_imputed[col] = df_imputed[col].interpolate(limit_direction="both")
     
-    return df_imputed
+#     return df_imputed
 
-def impute_iterativesvd(df, col=VALUE_COL, rank=5):
-    """IterativeSVD matrix completion (similar to SoftImpute)"""
-    if not SOFTIMPUTE_AVAILABLE:
-        raise ImportError("fancyimpute not available. Install with: pip install fancyimpute")
+# def impute_iterativesvd(df, col=VALUE_COL, rank=5):
+#     """IterativeSVD matrix completion (similar to SoftImpute)"""
+#     if not SOFTIMPUTE_AVAILABLE:
+#         raise ImportError("fancyimpute not available. Install with: pip install fancyimpute")
     
-    try:
-        from fancyimpute import IterativeSVD
-    except ImportError:
-        # Use SoftImpute as fallback
-        return impute_softimpute(df, col=col, max_rank=rank)
+#     try:
+#         from fancyimpute import IterativeSVD
+#     except ImportError:
+#         # Use SoftImpute as fallback
+#         return impute_softimpute(df, col=col, max_rank=rank)
     
-    df_imputed = df.copy()
-    y = df_imputed[col].values.reshape(-1, 1).astype(float)
+#     df_imputed = df.copy()
+#     y = df_imputed[col].values.reshape(-1, 1).astype(float)
     
-    try:
-        # Apply IterativeSVD
-        imputer = IterativeSVD(rank=rank, verbose=False)
-        y_imputed = imputer.fit_transform(y)
-        df_imputed[col] = y_imputed.ravel()
+#     try:
+#         # Apply IterativeSVD
+#         imputer = IterativeSVD(rank=rank, verbose=False)
+#         y_imputed = imputer.fit_transform(y)
+#         df_imputed[col] = y_imputed.ravel()
         
-    except Exception as e:
-        # Fallback to linear interpolation
-        df_imputed[col] = df_imputed[col].interpolate(limit_direction="both")
+#     except Exception as e:
+#         # Fallback to linear interpolation
+#         df_imputed[col] = df_imputed[col].interpolate(limit_direction="both")
     
-    return df_imputed
+#     return df_imputed
 
 # ============================================================================
 # Evaluation Metrics
@@ -566,31 +561,38 @@ def process_all_datasets():
                 for method_name, impute_func in imputation_methods.items():
                     try:
                         df_imputed = impute_func(df_missing_processed)
+
+                        # ---- NEW: save the imputed dataset for this method ----
+                        safe_method = method_name.replace(" ", "").replace("/", "_")
+                        imputed_fname = f"{base_name}_mr{int(missing_rate*100)}_{safe_method}_imputed.csv"
+                        imputed_fpath = os.path.join(IMPUTED_DATASETS_FOLDER, imputed_fname)
+                        df_imputed.to_csv(imputed_fpath, index=False)
+
+                        # Evaluate & log
                         metrics = evaluate_imputation(df_original, df_imputed, missing_mask)
-                        
                         report.write(f"{method_name:<20} {metrics['rmse']:>12.4f} "
-                                   f"{metrics['mae']:>12.4f} {metrics['n_points']:>10}\n")
-                        
+                                    f"{metrics['mae']:>12.4f} {metrics['n_points']:>10}\n")
+
                         all_results.append({
                             'dataset': base_name,
                             'missing_rate': missing_rate,
                             'method': method_name,
                             'rmse': metrics['rmse'],
                             'mae': metrics['mae'],
-                            'n_points': metrics['n_points']
+                            'n_points': metrics['n_points'],
+                            'imputed_csv': imputed_fpath
                         })
-                        
-                        fig_name = f"{base_name}_mr{int(missing_rate*100)}_{method_name}.png"
+
+                        # Keep your figure export
+                        fig_name = f"{base_name}_mr{int(missing_rate*100)}_{safe_method}.png"
                         fig_path = os.path.join(FIGURES_FOLDER, fig_name)
-                        visualize_imputation(df_original, df_missing, df_imputed, 
-                                           method_name, base_name, missing_rate, fig_path)
-                        
+                        visualize_imputation(df_original, df_missing, df_imputed,
+                                            method_name, base_name, missing_rate, fig_path)
+
                     except Exception as e:
                         report.write(f"{method_name:<20} ERROR: {str(e)}\n")
                         print(f"Error in {method_name} for {missing_file}: {str(e)}")
-                
-                report.write("\n")
-                
+
             except Exception as e:
                 report.write(f"ERROR processing file: {str(e)}\n\n")
                 print(f"Error processing {missing_file}: {str(e)}")

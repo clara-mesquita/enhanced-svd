@@ -1,0 +1,99 @@
+================================================================================
+IMPUTATION METHOD IMPACT ANALYSIS REPORT
+================================================================================
+
+1. OVERALL STATISTICS
+--------------------------------------------------------------------------------
+Total files analyzed: 121
+Number of routes: 11
+Imputation methods tested: Mean, ARIMA, IterativeSVD, SVD_KNN, Spline, LOCF, HoltWinters, Linear, SoftImpute, SVD_KNN_Hankel, KNN_Sklearn, Unknown, Kalman
+
+2. IMPUTATION METHOD RANKING (by average RMSE)
+--------------------------------------------------------------------------------
+                           rmse                                                    mae                                         
+                           mean           std          min           max          mean           std          min           max
+imputation_method                                                                                                              
+Unknown            0.000000e+00           NaN         0.00  0.000000e+00  0.000000e+00           NaN         0.00  0.000000e+00
+KNN_Sklearn        6.597909e+07  2.458506e+07  30337322.57  1.095945e+08  3.511720e+07  1.787155e+07  13100802.20  6.520300e+07
+Mean               6.597909e+07  2.458506e+07  30337322.57  1.095945e+08  3.511720e+07  1.787155e+07  13100802.20  6.520300e+07
+SVD_KNN_Hankel     6.735053e+07  2.449962e+07  31447958.63  1.065177e+08  3.652819e+07  1.844158e+07  14064876.69  7.330419e+07
+SVD_KNN            6.949794e+07  2.571974e+07  31611872.88  1.103270e+08  4.080298e+07  2.184105e+07  14364692.59  8.408050e+07
+LOCF               1.059151e+08  5.954223e+07  39037935.03  2.360891e+08  7.139891e+07  4.141245e+07  16964854.81  1.337069e+08
+ARIMA              1.223253e+08  1.208649e+08  31035509.37  4.375091e+08  9.393017e+07  1.251756e+08  18908554.97  4.304997e+08
+Linear             1.346852e+08  1.192069e+08  35443103.78  3.870335e+08  1.070603e+08  1.230542e+08  18528418.37  3.762467e+08
+IterativeSVD       1.346852e+08  1.192069e+08  35443103.78  3.870335e+08  1.070603e+08  1.230542e+08  18528418.37  3.762467e+08
+HoltWinters        1.355662e+08  1.202217e+08  31805389.24  3.819358e+08  1.068959e+08  1.251402e+08  15249981.49  3.736043e+08
+Kalman             3.383126e+08  2.625823e+08  44014458.01  9.473256e+08  3.098795e+08  2.328222e+08  31435909.67  8.120886e+08
+Spline             3.690264e+08  5.036703e+08  66212951.55  1.751029e+09  3.430649e+08  5.046637e+08  41776743.19  1.726348e+09
+SoftImpute         6.265570e+08  2.325579e+08  82981321.48  1.010547e+09  5.249558e+08  2.278653e+08  75749972.01  1.003465e+09
+
+3. BEST IMPUTATION METHOD PER ROUTE
+--------------------------------------------------------------------------------
+                                                                    route best_imputation_rmse   rmse_value best_imputation_mae    mae_value
+                     ankara.ulakbim.gov.tr -> psmp-gn-bw-lis-pt.geant.org       SVD_KNN_Hankel 7.514224e+07      SVD_KNN_Hankel 4.025284e+07
+                     ankara.ulakbim.gov.tr -> psmp-gn-bw-poz-pl.geant.org          KNN_Sklearn 9.251651e+07         KNN_Sklearn 4.161710e+07
+                                                   imputation_summary.csv              Unknown 0.000000e+00             Unknown 0.000000e+00
+               psmall.lut.ac.uk to psmp-gn-bw-vie-at.geant.org 10-24-2023       SVD_KNN_Hankel 1.065177e+08      SVD_KNN_Hankel 5.152225e+07
+psmp-gn-bw-lis-pt.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023          KNN_Sklearn 5.641692e+07         KNN_Sklearn 1.717596e+07
+           psmp-gn-bw-lis-pt.geant.org to perfsonar.restena.lu 10-24-2023          KNN_Sklearn 4.914696e+07         KNN_Sklearn 3.171260e+07
+psmp-gn-bw-poz-pl.geant.org to perfsonar-ankara.ulakbim.gov.tr 10-24-2023          KNN_Sklearn 5.759081e+07         KNN_Sklearn 1.310080e+07
+          psmp-gn-bw-poz-pl.geant.org to pspmp-anella.csuc.cat 10-24-2023          KNN_Sklearn 3.730951e+07      SVD_KNN_Hankel 2.308582e+07
+               psmp-gn-bw-vie-at.geant.org to psmall.lut.ac.uk 10-24-2023          KNN_Sklearn 3.033732e+07         KNN_Sklearn 1.808596e+07
+          pspmp-anella.csuc.cat to psmp-gn-bw-poz-pl.geant.org 10-24-2023                 Mean 7.829932e+07                Mean 4.054263e+07
+                          sonda.rediris.es -> psmp-gn-bw-lis-pt.geant.org                 Mean 7.256134e+07                Mean 6.009639e+07
+
+4. WIN RATE ANALYSIS
+--------------------------------------------------------------------------------
+Based on RMSE:
+  KNN_Sklearn: 6 routes (54.5%)
+  SVD_KNN_Hankel: 2 routes (18.2%)
+  Mean: 2 routes (18.2%)
+  Unknown: 1 routes (9.1%)
+
+Based on MAE:
+  KNN_Sklearn: 5 routes (45.5%)
+  SVD_KNN_Hankel: 3 routes (27.3%)
+  Mean: 2 routes (18.2%)
+  Unknown: 1 routes (9.1%)
+
+5. DTW SIMILARITY ANALYSIS (Between Methods)
+--------------------------------------------------------------------------------
+Average DTW distances between imputation methods:
+(Lower values indicate more similar prediction patterns)
+
+                       ARIMA   HoltWinters  IterativeSVD   KNN_Sklearn        Kalman          LOCF        Linear          Mean       SVD_KNN  SVD_KNN_Hankel    SoftImpute        Spline
+ARIMA           0.000000e+00  2.682696e+07  2.385748e+07  7.456958e+07  3.160586e+08  7.259752e+07  2.385748e+07  7.456958e+07  6.667711e+07    6.914946e+07  7.073254e+08  3.295686e+08
+HoltWinters     2.682696e+07  0.000000e+00  1.071520e+07  8.908307e+07  3.183469e+08  8.143827e+07  1.071520e+07  8.908307e+07  8.073955e+07    8.139396e+07  7.048845e+08  3.004005e+08
+IterativeSVD    2.385748e+07  1.071520e+07  0.000000e+00  8.730711e+07  3.216762e+08  7.960342e+07  0.000000e+00  8.730711e+07  7.767340e+07    7.826774e+07  7.029751e+08  2.969253e+08
+KNN_Sklearn     7.456958e+07  8.908307e+07  8.730711e+07  0.000000e+00  2.863673e+08  3.807611e+07  8.730711e+07  0.000000e+00  1.038190e+07    1.134599e+07  7.460776e+08  3.340454e+08
+Kalman          3.160586e+08  3.183469e+08  3.216762e+08  2.863673e+08  0.000000e+00  2.587067e+08  3.216762e+08  2.863673e+08  2.891210e+08    2.880113e+08  8.711638e+08  3.910913e+08
+LOCF            7.259752e+07  8.143827e+07  7.960342e+07  3.807611e+07  2.587067e+08  0.000000e+00  7.960342e+07  3.807611e+07  3.074791e+07    3.048943e+07  7.638106e+08  3.188346e+08
+Linear          2.385748e+07  1.071520e+07  0.000000e+00  8.730711e+07  3.216762e+08  7.960342e+07  0.000000e+00  8.730711e+07  7.767340e+07    7.826774e+07  7.029751e+08  2.969253e+08
+Mean            7.456958e+07  8.908307e+07  8.730711e+07  0.000000e+00  2.863673e+08  3.807611e+07  8.730711e+07  0.000000e+00  1.045782e+07    1.134599e+07  7.460776e+08  3.340454e+08
+SVD_KNN         6.667711e+07  8.073955e+07  7.767340e+07  1.038190e+07  2.891210e+08  3.074791e+07  7.767340e+07  1.045782e+07  0.000000e+00    3.725043e+06  7.515181e+08  3.281815e+08
+SVD_KNN_Hankel  6.914946e+07  8.139396e+07  7.826774e+07  1.134599e+07  2.880113e+08  3.048943e+07  7.826774e+07  1.134599e+07  3.725043e+06    0.000000e+00  7.522427e+08  3.285329e+08
+SoftImpute      7.073254e+08  7.048845e+08  7.029751e+08  7.460776e+08  8.711638e+08  7.638106e+08  7.029751e+08  7.460776e+08  7.515181e+08    7.522427e+08  0.000000e+00  9.041710e+08
+Spline          3.295686e+08  3.004005e+08  2.969253e+08  3.340454e+08  3.910913e+08  3.188346e+08  2.969253e+08  3.340454e+08  3.281815e+08    3.285329e+08  9.041710e+08  0.000000e+00
+
+Top 5 Most Similar Method Pairs:
+  1. IterativeSVD <-> Linear: 0.00
+  2. KNN_Sklearn <-> Mean: 0.00
+  3. Mean <-> KNN_Sklearn: 0.00
+  4. Linear <-> IterativeSVD: 0.00
+  5. SVD_KNN_Hankel <-> SVD_KNN: 818430.86
+
+Top 5 Most Different Method Pairs:
+  1. SoftImpute <-> Spline: 822790815.79
+  2. SoftImpute <-> Mean: 849798566.46
+  3. SoftImpute <-> LOCF: 849882571.56
+  4. SoftImpute <-> Kalman: 941294416.66
+  5. Spline <-> SoftImpute: 985551090.17
+
+DTW Stats (between methods):
+  Mean normalized: 245126382.80
+  Median normalized: 66095957.96
+  Std normalized: 354201507.57
+  Min normalized: 0.00
+  Max normalized: 1956329233.54
+
+================================================================================

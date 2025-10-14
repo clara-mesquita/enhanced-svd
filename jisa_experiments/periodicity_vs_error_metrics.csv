@@ -1,0 +1,3 @@
+error_metric,correlation_type,coefficient (r),p-value,is_significant (p < 0.05)
+rmse,Pearson,0.6395175105367285,2.966149931959205e-06,True
+rmse,Spearman,0.6327603613779307,4.0556713738959646e-06,True
