@@ -1,0 +1,11 @@
+MissingRate,Method,Fuzzy_Accuracy
+,ARIMA,96.45
+,HoltWinters,96.33
+,KNN_Sklearn,96.19
+,Kalman,93.94
+,LOCF,95.55
+,Linear,95.8
+,Mean,96.19
+,SVD_KNN,96.24
+,SVD_KNN_Hankel,96.54
+,Spline,94.57
