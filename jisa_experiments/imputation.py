@@ -37,37 +37,54 @@ def setup_folders():
 
 def estimate_period_fft(y, min_period=4, max_period=None):
     """Estimate period using FFT spectral analysis"""
+    # pega a série como numpy array
     y = np.asarray(y, dtype=float)
     n = len(y)
     
+    #essa parte faz sentido mesmo se os dados não chegam a mil?
+    # não buscar períodos maiores que 1/4 tamanho da série mas tb nunca acima de mil 
     if max_period is None:
         max_period = max(7, min(n // 4, 1000))
     
+    # deixando mais robusto evitando problemas com séries muito curtas 
     if n < min_period * 2:
         return max(min_period, min(n, 8))
     
+    # é feita uma interpoção apenas para evitar problemas com NaNs e para o cálculo do FFT
+    # mas a série original não é alterada
     y_series = pd.Series(y)
     y_filled = y_series.interpolate(limit_direction="both").ffill().bfill().to_numpy()
-    
+
+    # Verifica se a série preenchida é constante (se a diferença entre os valores não é mt pequena)
     if np.std(y_filled) < 1e-10:
         return min_period
-    
+
+    # Detrend e normaliza para capturar o fft sem influência de tendência ou escala    
     y_detrended = signal.detrend(y_filled)
     y_normalized = (y_detrended - np.mean(y_detrended)) / (np.std(y_detrended) + 1e-10)
     
+    # Cálculo do FFT
+
+    # já que a série é real e não complexa, é feita a fft apenas para a metade positiva do espectro - one-dimensional Discrete Fourier Transform (DFT) 
+    # ffet_vals é um array complexo de tamanho n/2 + 1 (freq senoidal q corresponde ao sinal)
     fft_vals = np.fft.rfft(y_normalized)
+    # power_spectrum é um vetor real e positivo com o quanto cada frequência contribui para o sinal.
     power_spectrum = np.abs(fft_vals) ** 2
+    # frequências associadas a cada componente do espectro
     frequencies = np.fft.rfftfreq(n)
     
+    # converte frequencia > periodo
     with np.errstate(divide='ignore', invalid='ignore'):
         periods = 1.0 / frequencies
         periods[0] = np.inf
     
+    # ignora frequencias mt baixas
     valid_mask = (periods >= min_period) & (periods <= max_period)
     
     if not np.any(valid_mask):
         return min_period
     
+    # pega o período onde o espectro da potência é máximo
     valid_power = power_spectrum[valid_mask]
     valid_periods = periods[valid_mask]
     best_period = valid_periods[np.argmax(valid_power)]
@@ -96,6 +113,8 @@ def unfold_matrix_to_series(M, original_len):
     y = M.reshape(-1)
     return y[:original_len]
 
+# Transformação na matriz de hankel -> matriz de trajetória
+# Uma matriz de Hankel tem valores constantes ao longo de suas antidiagonais 
 def build_hankel_matrix(y, window_size):
     """Build Hankel matrix from time series"""
     y = np.asarray(y, dtype=float)
@@ -113,6 +132,7 @@ def build_hankel_matrix(y, window_size):
     
     return H
 
+# Reconstructing the series from the Hankel matrix
 def hankel_to_series(H, method='diagonal_average'):
     """Reconstruct series from Hankel matrix"""
     K, L = H.shape
@@ -137,14 +157,22 @@ def hankel_to_series(H, method='diagonal_average'):
     
     return y
 
+# Entendimento do espaço latente via SVD
+# o svd "divide" a matriz original em camadas (estrutura principal -> padrão temporal/espacial)
 def svd_rank(M_filled, energy=0.9):
     """Compute SVD and choose rank by cumulative energy"""
     U, s, Vt = np.linalg.svd(M_filled, full_matrices=False)
-    
+
+    # energia -> soma dos valores singulares (que vem de uma amtriz diagonal)
+    # o uso de soma ao invés e soma quadrática ajuda a não evidenciar tanto os primeiros componentes
+    # pode-se dizer que foi principalmente uma decisão empírica tanto porque performou melhor como foi mais consistente
+    # e tb pode-se dizer que a ideia foi usar si como peso de cada padrão e não como potência
     total_energy = np.sum(s)
+    # verifica se a energia é muito pequena 
     if total_energy < 1e-12:
         return U, s, Vt, 1
-    
+
+    # energia acumulada (igualzin o svd, tem a ver com a redução de dimensionalidade)
     cum_energy = np.cumsum(s) / total_energy
     r = int(np.searchsorted(cum_energy, energy) + 1)
     r = max(1, min(r, min(M_filled.shape)))
