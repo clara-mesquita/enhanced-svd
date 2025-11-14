@@ -1,5 +1,5 @@
 # ============================================================
-# GRU Time Series Trainer with Safe CV, Pop!_OS Stabilizers
+# LSTM Time Series Trainer with Safe CV, Pop!_OS Stabilizers
 # ============================================================
 
 import os
@@ -19,7 +19,7 @@ from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import GRU, Dense, Dropout
+from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import RootMeanSquaredError
 from tensorflow.keras.optimizers import Adam
@@ -47,19 +47,20 @@ INPUT_FOLDER = './imputation_results_original'
 OUTPUT_MODEL_FOLDER = './modelo_salvo'
 OUTPUT_JSON = 'evaluation_rmse_mae.json'
 TRAIN_TEST_SPLIT = 0.8
-LOOK_BACK = 5                # default look_back (used when GRID_SEARCH_ENABLED=False)
-EPOCHS = 50                  # cut down for stability; adjust later
+LOOK_BACK = 5                 # default look_back (used when GRID_SEARCH_ENABLED=False)
+EPOCHS = 40                   # LSTM é mais pesado; 40 é um bom ponto inicial
 BATCH_SIZE = 32
 PATIENCE = 6
-N_SPLITS = 2                 # 2 folds to reduce compute
+N_SPLITS = 2                  # 2 folds para reduzir compute
 
-# Grid Search Parameters
+# Grid Search Parameters (ajustados para LSTM)
 GRID_SEARCH_ENABLED = True
 PARAM_GRID = {
-    'gru_units': [64],              # start lean; expand once stable (e.g., [32,64,128])
-    'learning_rate': [1e-3, 1e-4],
-    'look_back': [5],               # try [3,5,7] later
-    'dropout_rate': [0.0, 0.2]
+    'lstm_units': [32, 64],          # LSTM costuma precisar de menos unidades que GRU para estabilidade
+    'learning_rate': [1e-3, 5e-4],   # levemente mais conservador
+    'look_back': [5],                # pode expandir depois (ex.: [3,5,7])
+    'dropout_rate': [0.0, 0.2],
+    'recurrent_dropout': [0.0]       # mantenha 0.0 se usar GPU; RNN rec. dropout pode ser lento
 }
 # ============================================
 
@@ -76,17 +77,24 @@ def create_dataset(X, look_back):
     ys = np.array(ys).reshape(-1, 1)   # ensure 2D
     return Xs, ys
 
-def create_gru_model(units, train_shape, learning_rate, dropout_rate=0.0):
+def create_lstm_model(units, train_shape, learning_rate, dropout_rate=0.0, recurrent_dropout=0.0):
     """
-    Cria modelo GRU com opção de dropout (stacked GRU many-to-one).
+    Cria modelo LSTM (stacked many-to-one) com dropout opcional.
     train_shape: (N, look_back, n_features)
     """
     model = Sequential()
-    model.add(GRU(units=units, return_sequences=True,
-                  input_shape=[train_shape[1], train_shape[2]]))
+    model.add(LSTM(
+        units=units,
+        return_sequences=True,
+        input_shape=[train_shape[1], train_shape[2]],
+        recurrent_dropout=recurrent_dropout
+    ))
     if dropout_rate > 0:
         model.add(Dropout(dropout_rate))
-    model.add(GRU(units=units))
+    model.add(LSTM(
+        units=units,
+        recurrent_dropout=recurrent_dropout
+    ))
     if dropout_rate > 0:
         model.add(Dropout(dropout_rate))
     model.add(Dense(1))
@@ -147,7 +155,7 @@ def grid_search(train_scaled, param_grid, epochs, batch_size, patience, n_splits
     Realiza grid search para encontrar melhores hiperparâmetros.
     """
     print("\n" + "="*60)
-    print("INICIANDO GRID SEARCH")
+    print("INICIANDO GRID SEARCH (LSTM)")
     print("="*60)
 
     param_combinations = [dict(zip(param_grid.keys(), v))
@@ -168,11 +176,12 @@ def grid_search(train_scaled, param_grid, epochs, batch_size, patience, n_splits
                 raise ValueError("Dataset de janelas muito pequeno para CV.")
 
             def model_builder():
-                return create_gru_model(
-                    units=params['gru_units'],
+                return create_lstm_model(
+                    units=params['lstm_units'],
                     train_shape=X_train.shape,
                     learning_rate=params['learning_rate'],
-                    dropout_rate=params['dropout_rate']
+                    dropout_rate=params['dropout_rate'],
+                    recurrent_dropout=params.get('recurrent_dropout', 0.0)
                 )
 
             # Treina e avalia (modelo novo por fold)
@@ -210,7 +219,7 @@ def save_model(model, directory, filename):
     if directory:
         if not os.path.exists(directory):
             os.makedirs(directory)
-        file_path = os.path.join(directory, f'{filename}_GRU.keras')
+        file_path = os.path.join(directory, f'{filename}_LSTM.keras')
         model.save(file_path)
         print(f"Modelo salvo em: '{file_path}'")
 
@@ -304,10 +313,11 @@ def process_file(filepath, filename, output_model_dir, use_grid_search):
             raise RuntimeError("Grid search não encontrou parâmetros válidos.")
     else:
         best_params = {
-            'gru_units': 64,
-            'learning_rate': 1e-4,
+            'lstm_units': 64,
+            'learning_rate': 5e-4,
             'look_back': LOOK_BACK,
-            'dropout_rate': 0.0
+            'dropout_rate': 0.0,
+            'recurrent_dropout': 0.0
         }
         grid_results = None
 
@@ -324,15 +334,16 @@ def process_file(filepath, filename, output_model_dir, use_grid_search):
     if len(X_test) == 0:
         raise ValueError("Conjunto de teste não possui janelas após ajuste de look_back.")
 
-    print(f"\nTreinando modelo final com melhores parâmetros...")
+    print(f"\nTreinando modelo final com melhores parâmetros (LSTM)...")
     print(f"Parâmetros: {best_params}")
 
     # Treina modelo final
-    final_model = create_gru_model(
-        units=best_params['gru_units'],
+    final_model = create_lstm_model(
+        units=best_params['lstm_units'],
         train_shape=X_train.shape,
         learning_rate=best_params['learning_rate'],
-        dropout_rate=best_params['dropout_rate']
+        dropout_rate=best_params['dropout_rate'],
+        recurrent_dropout=best_params.get('recurrent_dropout', 0.0)
     )
 
     early_stop = keras.callbacks.EarlyStopping(
@@ -379,13 +390,13 @@ def process_file(filepath, filename, output_model_dir, use_grid_search):
 
     return results
 
-def gru_prediction(source_dir, output_model_dir=None, output_json='evaluation_rmse_mae.json',
-                   use_grid_search=True):
+def lstm_prediction(source_dir, output_model_dir=None, output_json='evaluation_rmse_mae_lstm.json',
+                    use_grid_search=True):
     """Função principal para processar todos os arquivos"""
     evaluation = {}
 
     print(f"\n{'='*70}")
-    print(f"INÍCIO DO PROCESSAMENTO")
+    print(f"INÍCIO DO PROCESSAMENTO (LSTM)")
     print(f"Pasta de entrada: {source_dir}")
     print(f"Grid Search: {'ATIVADO' if use_grid_search else 'DESATIVADO'}")
     print(f"{'='*70}\n")
@@ -447,7 +458,7 @@ def gru_prediction(source_dir, output_model_dir=None, output_json='evaluation_rm
     return evaluation
 
 if __name__ == "__main__":
-    results = gru_prediction(
+    results = lstm_prediction(
         source_dir=INPUT_FOLDER,
         output_model_dir=OUTPUT_MODEL_FOLDER,
         output_json=OUTPUT_JSON,
